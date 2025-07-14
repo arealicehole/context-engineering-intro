@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- SEO Meta Tags -->
+    <% if (typeof seo !== 'undefined' && seo) { %>
+        <% if (seo.title) { %>
+            <title><%= seo.title %></title>
+        <% } else { %>
+            <title><%= title %> | <%= siteName %></title>
+        <% } %>
+        
+        <% if (seo.description) { %>
+            <meta name="description" content="<%= seo.description %>">
+        <% } else { %>
+            <meta name="description" content="<%= description %>">
+        <% } %>
+        
+        <% if (seo.canonical) { %>
+            <link rel="canonical" href="<%= seo.canonical %>">
+        <% } %>
+        
+        <% if (seo.noindex) { %>
+            <meta name="robots" content="noindex, nofollow">
+        <% } else { %>
+            <meta name="robots" content="index, follow">
+        <% } %>
+    <% } else { %>
+        <title><%= title %> | <%= siteName %></title>
+        <meta name="description" content="<%= description %>">
+        <meta name="robots" content="index, follow">
+    <% } %>
+    
+    <!-- OpenGraph Tags -->
+    <% if (typeof seo !== 'undefined' && seo) { %>
+        <meta property="og:title" content="<%= seo.ogTitle || seo.title || title %>">
+        <meta property="og:description" content="<%= seo.ogDescription || seo.description || description %>">
+        <meta property="og:url" content="<%= seo.ogUrl || baseUrl %>">
+        <meta property="og:type" content="<%= seo.ogType || 'website' %>">
+        <meta property="og:site_name" content="<%= siteName %>">
+        <meta property="og:locale" content="en_US">
+        <% if (seo.ogImage) { %>
+            <meta property="og:image" content="<%= seo.ogImage %>">
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
+            <meta property="og:image:alt" content="<%= seo.title || title %>">
+        <% } %>
+        
+        <!-- Article-specific OpenGraph -->
+        <% if (seo.article) { %>
+            <meta property="article:author" content="<%= seo.article.author %>">
+            <meta property="article:published_time" content="<%= seo.article.publishedTime %>">
+            <% if (seo.article.modifiedTime) { %>
+                <meta property="article:modified_time" content="<%= seo.article.modifiedTime %>">
+            <% } %>
+            <% if (seo.article.section) { %>
+                <meta property="article:section" content="<%= seo.article.section %>">
+            <% } %>
+            <% if (seo.article.tags) { %>
+                <% seo.article.tags.forEach(tag => { %>
+                    <meta property="article:tag" content="<%= tag %>">
+                <% }) %>
+            <% } %>
+        <% } %>
+    <% } %>
+    
+    <!-- Twitter Card Tags -->
+    <% if (typeof seo !== 'undefined' && seo) { %>
+        <meta name="twitter:card" content="<%= seo.twitterCard || 'summary_large_image' %>">
+        <meta name="twitter:title" content="<%= seo.twitterTitle || seo.title || title %>">
+        <meta name="twitter:description" content="<%= seo.twitterDescription || seo.description || description %>">
+        <% if (seo.twitterImage) { %>
+            <meta name="twitter:image" content="<%= seo.twitterImage %>">
+            <meta name="twitter:image:alt" content="<%= seo.title || title %>">
+        <% } %>
+    <% } %>
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    
+    <!-- Google Fonts - Digital Art Deco Theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Structured Data -->
+    <% if (typeof seo !== 'undefined' && seo && seo.structuredData) { %>
+        <script type="application/ld+json">
+        <%- JSON.stringify(seo.structuredData, null, 2) %>
+        </script>
+    <% } %>
+    
+    <!-- Pagination Links -->
+    <% if (typeof pagination !== 'undefined' && pagination) { %>
+        <% if (pagination.hasPrev) { %>
+            <link rel="prev" href="<%= baseUrl %>?page=<%= pagination.prevPage %>">
+        <% } %>
+        <% if (pagination.hasNext) { %>
+            <link rel="next" href="<%= baseUrl %>?page=<%= pagination.nextPage %>">
+        <% } %>
+    <% } %>
+</head>
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo and Title -->
+                <div class="site-branding">
+                    <a href="/" class="logo-link">
+                        <div class="logo-container">
+                            <div class="logo-icon">💩</div>
+                            <div class="logo-text">
+                                <h1 class="site-title">Poop Quest</h1>
+                                <p class="site-tagline">Transform HTML into Art</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="main-navigation">
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="/" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'home' ? 'active' : '' %>">
+                                Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/about" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'about' ? 'active' : '' %>">
+                                About
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/stats" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'stats' ? 'active' : '' %>">
+                                Stats
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/search" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'search' ? 'active' : '' %>">
+                                Search
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" aria-label="Toggle navigation">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="content-wrapper">
+                <!-- Primary Content -->
+                <div class="primary-content">
+                    <!-- Breadcrumbs -->
+                    <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 1) { %>
+                        <nav class="breadcrumbs" aria-label="Breadcrumb">
+                            <ol class="breadcrumb-list">
+                                <% breadcrumbs.forEach((crumb, index) => { %>
+                                    <li class="breadcrumb-item <%= crumb.current ? 'current' : '' %>">
+                                        <% if (crumb.current) { %>
+                                            <span aria-current="page"><%= crumb.name %></span>
+                                        <% } else { %>
+                                            <a href="<%= crumb.url %>"><%= crumb.name %></a>
+                                        <% } %>
+                                    </li>
+                                <% }) %>
+                            </ol>
+                        </nav>
+                    <% } %>
+                    
+                    <!-- Page Content -->
+                    <div class="page-content">
+                        <%- body %>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <!-- Discord Bot Info -->
+                    <div class="sidebar-widget widget-discord">
+                        <h3 class="widget-title">Create Posts via Discord</h3>
+                        <div class="widget-content">
+                            <p class="widget-text">
+                                Share your HTML content instantly using our Discord bot!
+                            </p>
+                            <div class="discord-commands">
+                                <div class="command-item">
+                                    <code>!poop</code>
+                                    <p>Upload HTML file or paste HTML code</p>
+                                </div>
+                                <div class="command-item">
+                                    <code>!help</code>
+                                    <p>Get help with bot commands</p>
+                                </div>
+                            </div>
+                            <a href="https://discord.gg/poopquest" class="discord-link" target="_blank" rel="noopener">
+                                Join Discord Server
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Posts -->
+                    <div class="sidebar-widget widget-recent-posts">
+                        <h3 class="widget-title">Recent Posts</h3>
+                        <div class="widget-content">
+                            <div class="recent-posts-list">
+                                <!-- This would be populated by the route handler -->
+                                <% if (typeof recentPosts !== 'undefined' && recentPosts && recentPosts.length > 0) { %>
+                                    <% recentPosts.slice(0, 5).forEach(post => { %>
+                                        <div class="recent-post-item">
+                                            <a href="/<%= post.slug %>" class="recent-post-link">
+                                                <h4 class="recent-post-title"><%= post.title %></h4>
+                                                <p class="recent-post-meta">
+                                                    by <%= post.discord_username %> •
+                                                    <time datetime="<%= post.created_at %>">
+                                                        <%= new Date(post.created_at).toLocaleDateString() %>
+                                                    </time>
+                                                </p>
+                                            </a>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <p class="no-posts">No recent posts yet. Be the first to share!</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Widget -->
+                    <div class="sidebar-widget widget-stats">
+                        <h3 class="widget-title">Platform Stats</h3>
+                        <div class="widget-content">
+                            <div class="stats-grid">
+                                <% if (typeof stats !== 'undefined' && stats) { %>
+                                    <div class="stat-item">
+                                        <span class="stat-value"><%= stats.totalPosts || 0 %></span>
+                                        <span class="stat-label">Total Posts</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-value"><%= stats.totalPages || 0 %></span>
+                                        <span class="stat-label">Pages</span>
+                                    </div>
+                                <% } else { %>
+                                    <div class="stat-item">
+                                        <span class="stat-value">∞</span>
+                                        <span class="stat-label">Possibilities</span>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Powered Badge -->
+                    <div class="sidebar-widget widget-ai-badge">
+                        <h3 class="widget-title">Powered by AI</h3>
+                        <div class="widget-content">
+                            <p class="widget-text">
+                                Content analysis and metadata generation powered by 
+                                <strong>Grok AI</strong> from x.ai
+                            </p>
+                            <div class="ai-features">
+                                <div class="feature-item">
+                                    <span class="feature-icon">🧠</span>
+                                    <span class="feature-text">Smart Titles</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">📝</span>
+                                    <span class="feature-text">Auto Descriptions</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">🔗</span>
+                                    <span class="feature-text">SEO Optimization</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section footer-brand">
+                    <h3 class="footer-title">Poop Quest</h3>
+                    <p class="footer-description">
+                        Transform your HTML content into beautiful, shareable web posts using Discord and AI.
+                    </p>
+                    <div class="footer-social">
+                        <a href="https://discord.gg/poopquest" class="social-link" target="_blank" rel="noopener">
+                            <span class="social-icon">💬</span>
+                            Discord
+                        </a>
+                        <a href="https://github.com/poopquest" class="social-link" target="_blank" rel="noopener">
+                            <span class="social-icon">🐱</span>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section footer-links">
+                    <h3 class="footer-title">Quick Links</h3>
+                    <ul class="footer-menu">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/stats">Statistics</a></li>
+                        <li><a href="/search">Search</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section footer-legal">
+                    <h3 class="footer-title">Legal</h3>
+                    <ul class="footer-menu">
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/api">API Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section footer-tech">
+                    <h3 class="footer-title">Technology</h3>
+                    <div class="tech-stack">
+                        <span class="tech-item">Node.js</span>
+                        <span class="tech-item">Express.js</span>
+                        <span class="tech-item">Discord.js</span>
+                        <span class="tech-item">Grok AI</span>
+                        <span class="tech-item">SQLite</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <p>&copy; <%= currentYear %> Poop Quest. All rights reserved.</p>
+                </div>
+                <div class="footer-version">
+                    <p>Version <%= version %> • Built with ❤️ and 💩</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="/js/main.js"></script>
+    
+    <!-- Analytics (if enabled) -->
+    <% if (typeof analytics !== 'undefined' && analytics && analytics.enabled) { %>
+        <script>
+            // Analytics code would go here
+        </script>
+    <% } %>
+</body>
+</html>

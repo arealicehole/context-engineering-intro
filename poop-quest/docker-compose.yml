@@ -1,0 +1,230 @@
+# Docker Compose configuration for Poop Quest
+# Provides easy deployment and development setup
+
+version: '3.8'
+
+services:
+  # Production service
+  poop-quest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: poop-quest-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BASE_URL=https://poop.quest
+      - DATABASE_PATH=/app/data/posts.db
+      - LOG_LEVEL=info
+    env_file:
+      - .env
+    volumes:
+      - poop-quest-data:/app/data
+      - poop-quest-logs:/app/logs
+      - poop-quest-images:/app/public/images
+    networks:
+      - poop-quest-network
+    labels:
+      - "com.docker.compose.project=poop-quest"
+      - "com.docker.compose.service=app"
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 3000, path: '/health', timeout: 5000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Development service
+  poop-quest-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: poop-quest-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - BASE_URL=http://localhost:3000
+      - DATABASE_PATH=/app/data/posts.db
+      - LOG_LEVEL=debug
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - poop-quest-dev-data:/app/data
+      - poop-quest-dev-logs:/app/logs
+    networks:
+      - poop-quest-network
+    labels:
+      - "com.docker.compose.project=poop-quest"
+      - "com.docker.compose.service=dev"
+    profiles:
+      - development
+
+  # Testing service
+  poop-quest-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: poop-quest-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_PATH=:memory:
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - poop-quest-network
+    profiles:
+      - testing
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: poop-quest-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - poop-quest-images:/var/www/images:ro
+    depends_on:
+      - poop-quest
+    networks:
+      - poop-quest-network
+    labels:
+      - "com.docker.compose.project=poop-quest"
+      - "com.docker.compose.service=nginx"
+    profiles:
+      - nginx
+
+  # Database backup service (optional)
+  backup:
+    image: alpine:latest
+    container_name: poop-quest-backup
+    restart: "no"
+    environment:
+      - BACKUP_SCHEDULE=0 2 * * *  # Daily at 2 AM
+    volumes:
+      - poop-quest-data:/data:ro
+      - ./backups:/backups
+    command: |
+      sh -c "
+        apk add --no-cache sqlite
+        while true; do
+          timestamp=$$(date +%Y%m%d_%H%M%S)
+          sqlite3 /data/posts.db '.backup /backups/posts_backup_$$timestamp.db'
+          find /backups -name 'posts_backup_*.db' -mtime +7 -delete
+          sleep 86400
+        done
+      "
+    depends_on:
+      - poop-quest
+    networks:
+      - poop-quest-network
+    profiles:
+      - backup
+
+  # Monitoring service with Prometheus metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: poop-quest-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - poop-quest-network
+    profiles:
+      - monitoring
+
+  # Grafana dashboard (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: poop-quest-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - poop-quest-network
+    profiles:
+      - monitoring
+
+volumes:
+  # Production volumes
+  poop-quest-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  poop-quest-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  
+  poop-quest-images:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./public/images
+
+  # Development volumes
+  poop-quest-dev-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+
+  poop-quest-dev-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+
+  # Monitoring volumes
+  prometheus-data:
+    driver: local
+  
+  grafana-data:
+    driver: local
+
+networks:
+  poop-quest-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

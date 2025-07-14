@@ -1,0 +1,276 @@
+---
+# Akash Deployment Configuration for Poop Quest
+# Decentralized cloud deployment using Akash Network
+
+version: "2.0"
+
+services:
+  # Main Poop Quest application
+  poop-quest:
+    image: poopquest/poop-quest:latest
+    depends_on:
+      - db-init
+    expose:
+      - port: 3000
+        as: 80
+        to:
+          - global: true
+    env:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/posts.db
+      - LOG_LEVEL=info
+      - AKASH_DEPLOYMENT=true
+    params:
+      storage:
+        data:
+          mount: /app/data
+          readOnly: false
+        logs:
+          mount: /app/logs
+          readOnly: false
+        images:
+          mount: /app/public/images
+          readOnly: false
+    command:
+      - "node"
+      - "index.js"
+    
+  # Database initialization service
+  db-init:
+    image: poopquest/poop-quest:latest
+    params:
+      storage:
+        data:
+          mount: /app/data
+          readOnly: false
+    env:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/posts.db
+    command:
+      - "node"
+      - "-e"
+      - "const { initializeDatabase } = require('./src/database/connection.js'); initializeDatabase().then(() => console.log('Database initialized')).catch(console.error);"
+    
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - poop-quest
+    expose:
+      - port: 80
+        as: 80
+        to:
+          - global: true
+      - port: 443
+        as: 443
+        to:
+          - global: true
+    params:
+      storage:
+        nginx-config:
+          mount: /etc/nginx/nginx.conf
+          readOnly: true
+        ssl-certs:
+          mount: /etc/nginx/ssl
+          readOnly: true
+        static-images:
+          mount: /var/www/images
+          readOnly: true
+    command:
+      - "nginx"
+      - "-g"
+      - "daemon off;"
+
+  # Monitoring service
+  monitoring:
+    image: prom/prometheus:latest
+    expose:
+      - port: 9090
+        as: 9090
+        to:
+          - service: poop-quest
+    env:
+      - PROMETHEUS_CONFIG_FILE=/etc/prometheus/prometheus.yml
+    params:
+      storage:
+        prometheus-config:
+          mount: /etc/prometheus
+          readOnly: true
+        prometheus-data:
+          mount: /prometheus
+          readOnly: false
+
+  # Backup service
+  backup:
+    image: alpine:latest
+    depends_on:
+      - poop-quest
+    env:
+      - BACKUP_SCHEDULE=0 2 * * *
+    params:
+      storage:
+        data:
+          mount: /data
+          readOnly: true
+        backups:
+          mount: /backups
+          readOnly: false
+    command:
+      - "sh"
+      - "-c"
+      - |
+        apk add --no-cache sqlite
+        while true; do
+          timestamp=$(date +%Y%m%d_%H%M%S)
+          sqlite3 /data/posts.db ".backup /backups/posts_backup_$timestamp.db"
+          find /backups -name 'posts_backup_*.db' -mtime +7 -delete
+          sleep 86400
+        done
+
+profiles:
+  compute:
+    # Main application profile
+    poop-quest:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          - size: 5Gi
+            name: data
+          - size: 1Gi
+            name: logs
+          - size: 2Gi
+            name: images
+    
+    # Database initialization profile
+    db-init:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - size: 5Gi
+            name: data
+    
+    # Nginx reverse proxy profile
+    nginx:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - size: 100Mi
+            name: nginx-config
+          - size: 100Mi
+            name: ssl-certs
+          - size: 2Gi
+            name: static-images
+    
+    # Monitoring profile
+    monitoring:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 1Gi
+        storage:
+          - size: 100Mi
+            name: prometheus-config
+          - size: 10Gi
+            name: prometheus-data
+    
+    # Backup profile
+    backup:
+      resources:
+        cpu:
+          units: 0.25
+        memory:
+          size: 256Mi
+        storage:
+          - size: 5Gi
+            name: data
+          - size: 20Gi
+            name: backups
+
+  placement:
+    # Primary deployment region
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+          - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
+      pricing:
+        poop-quest:
+          denom: uakt
+          amount: 1000
+        db-init:
+          denom: uakt
+          amount: 500
+        nginx:
+          denom: uakt
+          amount: 500
+        monitoring:
+          denom: uakt
+          amount: 500
+        backup:
+          denom: uakt
+          amount: 250
+    
+    # Secondary deployment region
+    akash-secondary:
+      attributes:
+        host: akash
+        region: us-west
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+      pricing:
+        poop-quest:
+          denom: uakt
+          amount: 1200
+        db-init:
+          denom: uakt
+          amount: 600
+        nginx:
+          denom: uakt
+          amount: 600
+        monitoring:
+          denom: uakt
+          amount: 600
+        backup:
+          denom: uakt
+          amount: 300
+
+deployment:
+  # Main deployment
+  poop-quest:
+    akash:
+      profile: poop-quest
+      count: 1
+  
+  db-init:
+    akash:
+      profile: db-init
+      count: 1
+  
+  nginx:
+    akash:
+      profile: nginx
+      count: 1
+  
+  monitoring:
+    akash:
+      profile: monitoring
+      count: 1
+  
+  backup:
+    akash:
+      profile: backup
+      count: 1

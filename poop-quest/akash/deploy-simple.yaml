@@ -1,0 +1,56 @@
+---
+# Simplified Akash Deployment Configuration for Poop Quest
+# Minimal deployment for testing and development
+
+version: "2.0"
+
+services:
+  poop-quest:
+    image: poopquest/poop-quest:latest
+    expose:
+      - port: 3000
+        as: 80
+        to:
+          - global: true
+    env:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/posts.db
+      - LOG_LEVEL=info
+      - AKASH_DEPLOYMENT=true
+    params:
+      storage:
+        data:
+          mount: /app/data
+          readOnly: false
+
+profiles:
+  compute:
+    poop-quest:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          - size: 5Gi
+            name: data
+
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+          - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
+      pricing:
+        poop-quest:
+          denom: uakt
+          amount: 1000
+
+deployment:
+  poop-quest:
+    akash:
+      profile: poop-quest
+      count: 1

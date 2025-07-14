@@ -1,0 +1,336 @@
+<%
+// Set up variables for the layout
+const bodyClass = 'post-page';
+const currentPage = 'post';
+%>
+
+<!-- Main Post Content -->
+<article class="post-article">
+    <!-- Post Header -->
+    <header class="post-header">
+        <div class="post-meta">
+            <div class="post-author">
+                <span class="author-icon">👤</span>
+                <span class="author-name"><%= post.discord_username %></span>
+            </div>
+            <div class="post-date">
+                <span class="date-icon">📅</span>
+                <time datetime="<%= post.created_at %>" class="post-time">
+                    <%= new Date(post.created_at).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    }) %>
+                </time>
+            </div>
+            <% if (typeof readingTime !== 'undefined' && readingTime) { %>
+                <div class="reading-time">
+                    <span class="time-icon">⏱️</span>
+                    <span class="time-text"><%= readingTime.text %></span>
+                </div>
+            <% } %>
+        </div>
+        
+        <h1 class="post-title"><%= post.title %></h1>
+        
+        <div class="post-description">
+            <p><%= post.description %></p>
+        </div>
+        
+        <!-- Post Stats -->
+        <div class="post-stats">
+            <div class="stat-item">
+                <span class="stat-icon">🔗</span>
+                <span class="stat-label">Slug:</span>
+                <code class="stat-value"><%= post.slug %></code>
+            </div>
+            <% if (typeof readingTime !== 'undefined' && readingTime) { %>
+                <div class="stat-item">
+                    <span class="stat-icon">📝</span>
+                    <span class="stat-label">Words:</span>
+                    <span class="stat-value"><%= readingTime.words %></span>
+                </div>
+            <% } %>
+            <div class="stat-item">
+                <span class="stat-icon">🆔</span>
+                <span class="stat-label">ID:</span>
+                <span class="stat-value">#<%= post.id %></span>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Social Sharing -->
+    <% if (typeof shareUrls !== 'undefined' && shareUrls) { %>
+        <div class="post-sharing">
+            <h3 class="sharing-title">Share this post:</h3>
+            <div class="sharing-buttons">
+                <a href="<%= shareUrls.twitter %>" class="share-button share-twitter" target="_blank" rel="noopener">
+                    <span class="share-icon">🐦</span>
+                    <span class="share-text">Twitter</span>
+                </a>
+                <a href="<%= shareUrls.facebook %>" class="share-button share-facebook" target="_blank" rel="noopener">
+                    <span class="share-icon">📘</span>
+                    <span class="share-text">Facebook</span>
+                </a>
+                <a href="<%= shareUrls.linkedin %>" class="share-button share-linkedin" target="_blank" rel="noopener">
+                    <span class="share-icon">💼</span>
+                    <span class="share-text">LinkedIn</span>
+                </a>
+                <a href="<%= shareUrls.reddit %>" class="share-button share-reddit" target="_blank" rel="noopener">
+                    <span class="share-icon">🔴</span>
+                    <span class="share-text">Reddit</span>
+                </a>
+                <a href="<%= shareUrls.email %>" class="share-button share-email">
+                    <span class="share-icon">✉️</span>
+                    <span class="share-text">Email</span>
+                </a>
+                <button class="share-button share-copy" onclick="copyToClipboard('<%= shareUrls.copy %>')">
+                    <span class="share-icon">📋</span>
+                    <span class="share-text">Copy Link</span>
+                </button>
+            </div>
+        </div>
+    <% } %>
+    
+    <!-- Post Content -->
+    <div class="post-content">
+        <!-- CRITICAL: Use <%- %> for HTML content to render raw HTML -->
+        <!-- This is the main user content that should be displayed as-is -->
+        <div class="user-html-content">
+            <%- post.html_content %>
+        </div>
+    </div>
+    
+    <!-- Post Footer -->
+    <footer class="post-footer">
+        <div class="post-actions">
+            <div class="post-links">
+                <a href="/<%= post.slug %>/raw" class="action-link" target="_blank" rel="noopener">
+                    <span class="action-icon">🔍</span>
+                    View Raw HTML
+                </a>
+                <a href="/<%= post.slug %>/preview" class="action-link" target="_blank" rel="noopener">
+                    <span class="action-icon">👀</span>
+                    Preview Mode
+                </a>
+            </div>
+            
+            <div class="post-timestamps">
+                <div class="timestamp-item">
+                    <span class="timestamp-label">Created:</span>
+                    <time datetime="<%= post.created_at %>" class="timestamp-value">
+                        <%= new Date(post.created_at).toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) %>
+                    </time>
+                </div>
+                <% if (post.updated_at && post.updated_at !== post.created_at) { %>
+                    <div class="timestamp-item">
+                        <span class="timestamp-label">Updated:</span>
+                        <time datetime="<%= post.updated_at %>" class="timestamp-value">
+                            <%= new Date(post.updated_at).toLocaleString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %>
+                        </time>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        
+        <!-- Discord Bot Promotion -->
+        <div class="bot-promotion">
+            <h3 class="promo-title">Create Your Own Posts!</h3>
+            <p class="promo-text">
+                Join our Discord server and use the <code>!poop</code> command to share your HTML content instantly.
+            </p>
+            <div class="promo-steps">
+                <div class="step-item">
+                    <span class="step-number">1</span>
+                    <span class="step-text">Join Discord Server</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">2</span>
+                    <span class="step-text">Use <code>!poop</code> command</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">3</span>
+                    <span class="step-text">Upload HTML or paste code</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">4</span>
+                    <span class="step-text">Get instant web post!</span>
+                </div>
+            </div>
+            <a href="https://discord.gg/poopquest" class="promo-button" target="_blank" rel="noopener">
+                Join Discord Server
+            </a>
+        </div>
+    </footer>
+</article>
+
+<!-- Related Posts -->
+<% if (typeof relatedPosts !== 'undefined' && relatedPosts && relatedPosts.length > 0) { %>
+    <section class="related-posts">
+        <h2 class="section-title">Related Posts</h2>
+        <div class="related-posts-grid">
+            <% relatedPosts.forEach(relatedPost => { %>
+                <article class="related-post-item">
+                    <a href="/<%= relatedPost.slug %>" class="related-post-link">
+                        <div class="related-post-content">
+                            <h3 class="related-post-title"><%= relatedPost.title %></h3>
+                            <p class="related-post-description"><%= relatedPost.description %></p>
+                            <div class="related-post-meta">
+                                <span class="related-post-author">by <%= relatedPost.discord_username %></span>
+                                <span class="related-post-date">
+                                    <%= new Date(relatedPost.created_at).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric'
+                                    }) %>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </article>
+            <% }) %>
+        </div>
+        
+        <div class="related-posts-footer">
+            <a href="/" class="view-all-link">
+                View All Posts →
+            </a>
+        </div>
+    </section>
+<% } %>
+
+<!-- Navigation -->
+<nav class="post-navigation">
+    <div class="nav-links">
+        <a href="/" class="nav-link nav-home">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Back to Home</span>
+        </a>
+        <a href="/search" class="nav-link nav-search">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-text">Search Posts</span>
+        </a>
+    </div>
+</nav>
+
+<!-- JSON-LD Structured Data for Post -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "<%= post.title %>",
+    "description": "<%= post.description %>",
+    "author": {
+        "@type": "Person",
+        "name": "<%= post.discord_username %>"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Poop Quest",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "<%= baseUrl %>/images/logo.png"
+        }
+    },
+    "datePublished": "<%= post.created_at %>",
+    "dateModified": "<%= post.updated_at || post.created_at %>",
+    "url": "<%= baseUrl %>/<%= post.slug %>",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "<%= baseUrl %>/<%= post.slug %>"
+    },
+    "wordCount": <%= typeof readingTime !== 'undefined' && readingTime ? readingTime.words : 0 %>
+}
+</script>
+
+<!-- Copy to Clipboard JavaScript -->
+<script>
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        // Modern browsers
+        navigator.clipboard.writeText(text).then(() => {
+            showCopyFeedback('Link copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            showCopyFeedback('Failed to copy link');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showCopyFeedback('Link copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            showCopyFeedback('Failed to copy link');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+function showCopyFeedback(message) {
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.className = 'copy-feedback';
+    feedback.textContent = message;
+    feedback.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(feedback);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        feedback.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
