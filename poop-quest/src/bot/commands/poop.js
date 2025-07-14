@@ -1,7 +1,7 @@
 import { getContentAnalyzer } from '../../ai/content-analyzer.js';
 import { Post } from '../../database/models/post.js';
 import { extractContent } from '../utils/file-handler.js';
-import { sanitizeSlug } from '../../utils/slug-sanitizer.js';
+import { cleanUserSlug as sanitizeSlug } from '../../utils/slug-sanitizer.js';
 
 /**
  * Handle !poop command

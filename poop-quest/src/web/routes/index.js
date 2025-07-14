@@ -373,18 +373,18 @@ function generatePaginationLinks(currentPage, totalPages, baseUrl) {
 /**
  * Format date for display
  */
-router.locals.formatDate = (date) => {
+function formatDate(date) {
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
-};
+}
 
 /**
  * Format relative time
  */
-router.locals.formatRelativeTime = (date) => {
+function formatRelativeTime(date) {
     const now = new Date();
     const postDate = new Date(date);
     const diffMs = now - postDate;

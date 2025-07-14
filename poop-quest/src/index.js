@@ -21,9 +21,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Import application components
-import { initializeDatabase } from './src/database/connection.js';
-import { createDiscordBot } from './src/bot/discord-bot.js';
-import { createWebServer } from './src/web/server.js';
+import { runMigrations } from './database/connection.js';
+import { getDiscordBot } from './bot/discord-bot.js';
+import { getWebServer } from './web/server.js';
 
 /**
  * Main application class
@@ -43,7 +43,7 @@ class PoopQuestApp {
             discordToken: process.env.DISCORD_BOT_TOKEN,
             grokApiKey: process.env.GROK_API_KEY,
             baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
-            databasePath: process.env.DATABASE_PATH || join(__dirname, 'data', 'posts.db')
+            databasePath: process.env.DATABASE_PATH || join(__dirname, '..', 'data', 'posts.db')
         };
         
         // Validate required environment variables
@@ -80,22 +80,22 @@ class PoopQuestApp {
         try {
             // Initialize database
             console.log('📊 Initializing database...');
-            await initializeDatabase();
+            await runMigrations();
             console.log('✅ Database initialized successfully');
             
             // Create Discord bot
             console.log('🤖 Creating Discord bot...');
-            this.bot = await createDiscordBot();
+            this.bot = getDiscordBot();
             console.log('✅ Discord bot created successfully');
             
             // Create web server
             console.log('🌐 Creating web server...');
-            this.server = await createWebServer();
+            this.server = getWebServer();
             
             // Add baseUrl to app locals
-            this.server.locals.baseUrl = this.config.baseUrl;
-            this.server.locals.version = this.getVersion();
-            this.server.locals.environment = this.config.environment;
+            this.server.app.locals.baseUrl = this.config.baseUrl;
+            this.server.app.locals.version = this.getVersion();
+            this.server.app.locals.environment = this.config.environment;
             
             console.log('✅ Web server created successfully');
             
@@ -119,29 +119,13 @@ class PoopQuestApp {
     async startServices() {
         // Start Discord bot
         console.log('🤖 Starting Discord bot...');
-        await this.bot.login(this.config.discordToken);
+        await this.bot.start();
         console.log('✅ Discord bot logged in successfully');
         
         // Start web server
         console.log('🌐 Starting web server...');
-        await new Promise((resolve, reject) => {
-            this.httpServer = this.server.listen(this.config.port, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    console.log(`✅ Web server listening on port ${this.config.port}`);
-                    resolve();
-                }
-            });
-        });
-        
-        // Set up server error handling
-        this.httpServer.on('error', (error) => {
-            console.error('❌ Web server error:', error);
-            if (error.code === 'EADDRINUSE') {
-                console.error(`Port ${this.config.port} is already in use`);
-            }
-        });
+        this.httpServer = await this.server.start();
+        console.log(`✅ Web server listening on port ${this.config.port}`);
     }
     
     /**
@@ -168,11 +152,11 @@ class PoopQuestApp {
                 });
             }
             
-            // Destroy Discord bot
+            // Stop Discord bot
             if (this.bot) {
-                console.log('🤖 Destroying Discord bot...');
-                this.bot.destroy();
-                console.log('✅ Discord bot destroyed');
+                console.log('🤖 Stopping Discord bot...');
+                await this.bot.stop();
+                console.log('✅ Discord bot stopped');
             }
             
             // Close database connections
@@ -222,7 +206,7 @@ class PoopQuestApp {
      */
     getVersion() {
         try {
-            const packageJsonPath = join(__dirname, 'package.json');
+            const packageJsonPath = join(__dirname, '..', 'package.json');
             if (existsSync(packageJsonPath)) {
                 const packageJson = require(packageJsonPath);
                 return packageJson.version || '1.0.0';
